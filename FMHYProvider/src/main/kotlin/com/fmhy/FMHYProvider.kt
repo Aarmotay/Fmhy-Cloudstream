@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package com.fmhy
 
 import com.lagradost.cloudstream3.*
