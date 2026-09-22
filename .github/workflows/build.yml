@@ -68,6 +68,18 @@ jobs:
           if [ ! -f builds/plugins.json ]; then
             find src -name "plugins.json" -exec cp {} builds/ \;
           fi
+      - name: Create repo.json
+        run: |
+          cat > builds/repo.json <<'EOF'
+          {
+            "name": "Ajay902188 Extensions",
+            "description": "CloudStream extensions repository",
+            "manifestVersion": 1,
+            "pluginLists": [
+              "https://raw.githubusercontent.com/Ajay902188/ext/builds/plugins.json"
+            ]
+          }
+          EOF
 
       - name: Push to builds branch
         working-directory: builds
