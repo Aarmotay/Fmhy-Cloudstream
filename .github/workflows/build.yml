@@ -1,0 +1,71 @@
+name: Build & Release Cloudstream Plugin
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: "build"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build plugins
+        run: |
+          ./gradlew make
+
+      - name: Generate repo.json
+        run: |
+          # Create a repo.json manifest that Cloudstream uses to discover plugins
+          REPO_URL="${{ github.server_url }}/${{ github.repository }}"
+          cat > builds/repo.json << EOF
+          {
+            "name": "FMHY Provider Repository",
+            "description": "Cloudstream extensions for browsing FMHY video directory",
+            "manifestVersion": 1,
+            "pluginLists": [
+              "${REPO_URL}/releases/download/builds/plugins.json"
+            ]
+          }
+          EOF
+
+      - name: Push builds to GitHub Pages / Release
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Build: Auto-compile plugin artifacts"
+          file_pattern: "builds/*"
+          skip_dirty_check: false
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: builds
+          name: "Plugin Builds"
+          files: |
+            builds/*.cs3
+            builds/plugins.json
+            builds/repo.json
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
