@@ -1,0 +1,106 @@
+--- FMHYProvider.kt
++++ FMHYProvider.kt
+@@ -276,7 +276,7 @@
+             )
+         }
+ 
+-        return HomePageResponse(categoryLists + homePageLists)
++        return newHomePageResponse(list = categoryLists + homePageLists)
+     }
+ 
+     /**
+@@ -388,10 +388,11 @@
+ 
+         // Provide the main site link
+         callback.invoke(
+-            ExtractorLink(
++            newExtractorLink(
+                 source = name,
+                 name = "Open Site: ${siteUrl.extractDomain()}",
+                 url = siteUrl,
+-                referer = "",
+-                quality = Qualities.Unknown.value
+-            )
++            ) {
++                this.referer = ""
++                this.quality = Qualities.Unknown.value
++            }
+         )
+ 
+         site?.mirrors?.forEachIndexed { index, mirror ->
+             callback.invoke(
+-                ExtractorLink(
++                newExtractorLink(
+                     source = name,
+                     name = "Mirror ${index + 1}: ${mirror.extractDomain()}",
+                     url = mirror,
+-                    referer = "",
+-                    quality = Qualities.Unknown.value
+-                )
++                ) {
++                    this.referer = ""
++                    this.quality = Qualities.Unknown.value
++                }
+             )
+         }
+ 
+@@ -458,11 +458,12 @@
+             if (src.startsWith("http")) {
+                 val isM3u8 = src.contains(".m3u8")
+                 callback.invoke(
+-                    ExtractorLink(
++                    newExtractorLink(
+                         source = name,
+                         name = "Direct Video",
+                         url = src,
+-                        referer = "",
+-                        quality = Qualities.Unknown.value,
+-                        isM3u8 = isM3u8
+-                    )
++                    ) {
++                        this.referer = ""
++                        this.quality = Qualities.Unknown.value
++                        this.isM3u8 = isM3u8
++                    }
+                 )
+             }
+         }
+@@ -478,11 +479,12 @@
+         m3u8Pattern.findAll(scriptContent).forEach { match ->
+             val url = match.groupValues[1]
+             callback.invoke(
+-                ExtractorLink(
++                newExtractorLink(
+                     source = name,
+                     name = "HLS Stream",
+                     url = url,
+-                    referer = "",
+-                    quality = Qualities.Unknown.value,
+-                    isM3u8 = true
+-                )
++                ) {
++                    this.referer = ""
++                    this.quality = Qualities.Unknown.value
++                    this.isM3u8 = true
++                }
+             )
+         }
+ 
+@@ -492,10 +494,11 @@
+         mp4Pattern.findAll(scriptContent).forEach { match ->
+             val url = match.groupValues[1]
+             callback.invoke(
+-                ExtractorLink(
++                newExtractorLink(
+                     source = name,
+                     name = "MP4 Stream",
+                     url = url,
+-                    referer = "",
+-                    quality = Qualities.Unknown.value
+-                )
++                ) {
++                    this.referer = ""
++                    this.quality = Qualities.Unknown.value
++                }
+             )
+         }
