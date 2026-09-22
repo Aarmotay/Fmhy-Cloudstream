@@ -394,7 +394,7 @@ class FMHYProvider : MainAPI() {
                 ) {
                     this.referer = mainUrl
                     this.quality = Qualities.Unknown.value
-                    this.isM3u8 = false
+
                 }
         )
 
@@ -411,7 +411,7 @@ class FMHYProvider : MainAPI() {
                     ) {
                         this.referer = mainUrl
                         this.quality = Qualities.Unknown.value
-                        this.isM3u8 = false
+
                     }
             )
         }
@@ -462,10 +462,10 @@ class FMHYProvider : MainAPI() {
                             source = name,
                             name = "Direct Video",
                             url = src,
+                            isM3u8 = isM3u8
                         ) {
                             this.referer = referer
                             this.quality = Qualities.Unknown.value
-                            this.isM3u8 = isM3u8
                         }
                 )
             }
@@ -483,10 +483,10 @@ class FMHYProvider : MainAPI() {
                         source = name,
                         name = "HLS Stream",
                         url = url,
+                        isM3u8 = true
                     ) {
                         this.referer = referer
                         this.quality = Qualities.Unknown.value
-                        this.isM3u8 = true
                     }
             )
         }
@@ -498,10 +498,10 @@ class FMHYProvider : MainAPI() {
                         source = name,
                         name = "MP4 Stream",
                         url = url,
+                        isM3u8 = false
                     ) {
                         this.referer = referer
                         this.quality = Qualities.Unknown.value
-                        this.isM3u8 = false
                     }
             )
         }
