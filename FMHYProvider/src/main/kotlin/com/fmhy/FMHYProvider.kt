@@ -18,6 +18,7 @@ import org.jsoup.nodes.Document
  * - "Loading" a site shows its details (supported content types, features)
  * - "loadLinks" provides the direct URL to the streaming site for the user to visit
  */
+@Suppress("DEPRECATION")
 class FMHYProvider : MainAPI() {
     override var mainUrl = "https://fmhy.pages.dev"
     override var name = "FMHY Video Directory"
@@ -81,7 +82,7 @@ class FMHYProvider : MainAPI() {
 
         // Parse the main content area
         val contentElements = document.select(".vp-doc, .content, main, article, #VPContent")
-        val contentArea = if (contentElements.isNotEmpty()) contentElements.first() else document.body()
+        val contentArea: Element? = if (contentElements.isNotEmpty()) contentElements.first() else document.body()
 
         contentArea?.let { content ->
             // Iterate through all elements to track sections and parse list items
