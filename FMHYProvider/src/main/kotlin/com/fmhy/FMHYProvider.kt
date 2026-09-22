@@ -274,7 +274,7 @@ class FMHYProvider : MainAPI() {
             )
         }
 
-        return HomePageResponse(categoryLists + homePageLists)
+        return newHomePageResponse(categoryLists + homePageLists)
     }
 
     /**
@@ -386,7 +386,7 @@ class FMHYProvider : MainAPI() {
 
         // Provide the main site link
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 source = name,
                 name = "Open Site: ${siteUrl.extractDomain()}",
                 url = siteUrl,
@@ -402,7 +402,7 @@ class FMHYProvider : MainAPI() {
 
         site?.mirrors?.forEachIndexed { index, mirror ->
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     source = name,
                     name = "Mirror ${index + 1}: ${mirror.extractDomain()}",
                     url = mirror,
@@ -455,7 +455,7 @@ class FMHYProvider : MainAPI() {
             if (src.startsWith("http")) {
                 val isM3u8 = src.contains(".m3u8")
                 callback.invoke(
-                    ExtractorLink(
+                    newExtractorLink(
                         source = name,
                         name = "Direct Video",
                         url = src,
@@ -475,7 +475,7 @@ class FMHYProvider : MainAPI() {
         m3u8Pattern.findAll(scriptContent).forEach { match ->
             val url = match.groupValues[1]
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     source = name,
                     name = "HLS Stream",
                     url = url,
@@ -489,7 +489,7 @@ class FMHYProvider : MainAPI() {
         mp4Pattern.findAll(scriptContent).forEach { match ->
             val url = match.groupValues[1]
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     source = name,
                     name = "MP4 Stream",
                     url = url,
