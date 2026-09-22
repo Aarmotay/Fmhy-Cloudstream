@@ -1,93 +1,79 @@
 name: Build
 
-concurrency:
-  group: "build"
-  cancel-in-progress: true
-
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [ main, master ]
     paths-ignore:
-      - '*.md'
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          path: "src"
+          path: src
 
-      - name: Checkout builds
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: "builds"
-          path: "builds"
+          ref: builds
+          path: builds
         continue-on-error: true
 
       - name: Prepare builds directory
         run: |
-          if [ ! -d "$GITHUB_WORKSPACE/builds/.git" ]; then
-            mkdir -p "$GITHUB_WORKSPACE/builds"
-            cd "$GITHUB_WORKSPACE/builds"
+          if [ ! -d "builds/.git" ]; then
+            mkdir -p builds
+            cd builds
             git init
             git checkout -b builds
-            git config --local user.email "actions@github.com"
-            git config --local user.name "GitHub Actions"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
             git commit --allow-empty -m "Initial builds branch"
-          else
-            rm -f "$GITHUB_WORKSPACE"/builds/*.cs3 || true
           fi
 
-      - name: Setup JDK 17
-        uses: actions/setup-java@v5
+      - uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '17'
+          distribution: 'temurin'
 
-      # setup-android@v3 uses the deprecated Node.js 20 runtime and its
-      # default package list includes the removed legacy package "tools".
-      # The hosted runner already provides the Android SDK and sdkmanager.
-      - name: Setup Android SDK
-        shell: bash
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+          cache-disabled: true
+
+      - name: Clean old artifacts
+        run: rm -f builds/*.cs3
+
+      - name: Build plugins
+        working-directory: src
+        run: gradle make --no-daemon --no-configuration-cache --no-build-cache
+
+      - name: Generate plugins.json
+        working-directory: src
+        run: gradle makePluginsJson --no-daemon --no-configuration-cache --no-build-cache
+
+      - name: Copy artifacts
         run: |
-          set -euo pipefail
-
-          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:?ANDROID_HOME is not set}}"
-          sdkmanager_path="$(find "$sdk_root/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort -V | tail -n 1 || true)"
-
-          if [ -z "$sdkmanager_path" ]; then
-            sdkmanager_path="$(command -v sdkmanager || true)"
+          find src -name "*.cs3" -exec cp {} builds/ \;
+          find src -name "plugins.json" -path "*/build/*" -exec cp {} builds/ \;
+          # Fallback
+          if [ ! -f builds/plugins.json ]; then
+            find src -name "plugins.json" -exec cp {} builds/ \;
           fi
 
-          if [ -z "$sdkmanager_path" ]; then
-            echo "Could not find sdkmanager in $sdk_root/cmdline-tools or PATH" >&2
-            exit 1
-          fi
-
-          echo "Using sdkmanager: $sdkmanager_path"
-          yes | "$sdkmanager_path" --licenses >/dev/null || true
-          "$sdkmanager_path" \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
-
-      - name: Build Plugins
-        working-directory: ${{ github.workspace }}/src
+      - name: Push to builds branch
+        working-directory: builds
         run: |
-          chmod +x gradlew
-          ./gradlew make makePluginsJson
-          cp **/build/*.cs3 "$GITHUB_WORKSPACE/builds" || true
-          cp build/plugins.json "$GITHUB_WORKSPACE/builds" || true
-
-      - name: Push builds
-        working-directory: ${{ github.workspace }}/builds
-        run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git add .
-          git commit --amend -m "Build $GITHUB_SHA" || exit 0
-          git push --force || git push --force --set-upstream origin builds
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Build $(date +%s)" || echo "no changes"
+          git push origin HEAD:builds --force

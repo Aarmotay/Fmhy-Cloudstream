@@ -1,28 +1,40 @@
-// Use an integer for version numbers
-version = 1
+plugins {
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
+    id("com.lagradost.cloudstream3.gradle")
+}
+
+android {
+    namespace = "com.fmhy"
+    compileSdk = 35
+    defaultConfig {
+        minSdk = 21
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
 
 cloudstream {
-    // All of these properties are optional, you can safely remove any of them.
-
-    description = "FMHY Video Directory - Browse and stream from curated free movie/TV/anime streaming sites listed on freemediaheckyeah"
+    description = "FMHY Video Directory - Browse curated free streaming sites from freemediaheckyeah"
     authors = listOf("Ajay902188")
-
-    /**
-    * Status int as one of the following:
-    * 0: Down
-    * 1: Ok
-    * 2: Slow
-    * 3: Beta-only
-    **/
     status = 1
-
-    tvTypes = listOf(
-        "Movie",
-        "TvSeries",
-        "Anime"
-    )
-
+    tvTypes = listOf("Movie", "TvSeries", "Anime")
     language = "en"
-
     iconUrl = "https://fmhy.pages.dev/logo.png"
+}
+
+dependencies {
+    val cloudstream by configurations
+    cloudstream("com.lagradost:cloudstream3:pre-release")
+    implementation("com.github.Blatzar:NiceHttp:0.4.11")
+    implementation("org.jsoup:jsoup:1.18.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
 }

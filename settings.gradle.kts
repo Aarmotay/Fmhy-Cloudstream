@@ -1,16 +1,20 @@
-rootProject.name = "CloudstreamPlugins"
-
-// This file sets what projects are included.
-// All new projects should get automatically included unless specified in the "disabled" variable.
-
-val disabled = listOf<String>()
-
-File(rootDir, ".").eachDir { dir ->
-    if (!disabled.contains(dir.name) && File(dir, "build.gradle.kts").exists()) {
-        include(dir.name)
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        maven("https://jitpack.io")
+    }
+    resolutionStrategy {
+        eachPlugin {
+            when (requested.id.id) {
+                "com.android.library" -> useModule("com.android.tools.build:gradle:8.13.0")
+                "org.jetbrains.kotlin.android" -> useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.10")
+                "com.lagradost.cloudstream3.gradle" -> useModule("com.github.recloudstream:gradle:-SNAPSHOT")
+            }
+        }
     }
 }
 
-fun File.eachDir(block: (File) -> Unit) {
-    listFiles()?.filter { it.isDirectory }?.forEach { block(it) }
-}
+rootProject.name = "CloudstreamPlugins"
+include(":FMHYProvider")
