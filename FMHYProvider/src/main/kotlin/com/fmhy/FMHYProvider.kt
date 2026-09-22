@@ -461,8 +461,7 @@ class FMHYProvider : MainAPI() {
                     newExtractorLink(
                             source = name,
                             name = "Direct Video",
-                            url = src,
-                            isM3u8 = isM3u8
+                            url = src
                         ) {
                             this.referer = referer
                             this.quality = Qualities.Unknown.value
@@ -482,8 +481,7 @@ class FMHYProvider : MainAPI() {
                 newExtractorLink(
                         source = name,
                         name = "HLS Stream",
-                        url = url,
-                        isM3u8 = true
+                        url = url
                     ) {
                         this.referer = referer
                         this.quality = Qualities.Unknown.value
@@ -497,8 +495,7 @@ class FMHYProvider : MainAPI() {
                 newExtractorLink(
                         source = name,
                         name = "MP4 Stream",
-                        url = url,
-                        isM3u8 = false
+                        url = url
                     ) {
                         this.referer = referer
                         this.quality = Qualities.Unknown.value
