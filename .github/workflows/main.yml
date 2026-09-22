@@ -1,0 +1,91 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, master ]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+
+      - uses: actions/checkout@v4
+        with:
+          ref: builds
+          path: builds
+        continue-on-error: true
+
+      - name: Prepare builds directory
+        run: |
+          if [ ! -d "builds/.git" ]; then
+            mkdir -p builds
+            cd builds
+            git init
+            git checkout -b builds
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "Initial builds branch"
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+          cache-disabled: true
+
+      - name: Clean old artifacts
+        run: rm -f builds/*.cs3
+
+      - name: Build plugins
+        working-directory: src
+        run: gradle make --no-daemon --no-configuration-cache --no-build-cache
+
+      - name: Generate plugins.json
+        working-directory: src
+        run: gradle makePluginsJson --no-daemon --no-configuration-cache --no-build-cache
+
+      - name: Copy artifacts
+        run: |
+          find src -name "*.cs3" -exec cp {} builds/ \;
+          find src -name "plugins.json" -path "*/build/*" -exec cp {} builds/ \;
+          # Fallback
+          if [ ! -f builds/plugins.json ]; then
+            find src -name "plugins.json" -exec cp {} builds/ \;
+          fi
+      - name: Create repo.json
+        run: |
+          cat > builds/repo.json <<'EOF'
+          {
+            "name": "Ajay902188 Extensions",
+            "description": "CloudStream extensions repository",
+            "manifestVersion": 1,
+            "pluginLists": [
+              "https://raw.githubusercontent.com/Ajay902188/ext/builds/plugins.json"
+            ]
+          }
+          EOF
+
+      - name: Push to builds branch
+        working-directory: builds
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Build $(date +%s)" || echo "no changes"
+          git push origin HEAD:builds --force
