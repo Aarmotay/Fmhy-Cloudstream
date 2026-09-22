@@ -1,71 +1,69 @@
-name: Build & Release Cloudstream Plugin
-
-on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:
+name: Build
 
 concurrency:
   group: "build"
   cancel-in-progress: true
 
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - '*.md'
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@master
+        with:
+          path: "src"
 
-      - name: Set up JDK 17
+      - name: Checkout builds
+        uses: actions/checkout@master
+        with:
+          ref: "builds"
+          path: "builds"
+        continue-on-error: true
+
+      - name: Prepare builds directory
+        run: |
+          if [ ! -d "$GITHUB_WORKSPACE/builds/.git" ]; then
+            mkdir -p $GITHUB_WORKSPACE/builds
+            cd $GITHUB_WORKSPACE/builds
+            git init
+            git checkout -b builds
+            git config --local user.email "actions@github.com"
+            git config --local user.name "GitHub Actions"
+            git commit --allow-empty -m "Initial builds branch"
+          else
+            rm -f $GITHUB_WORKSPACE/builds/*.cs3 || true
+          fi
+
+      - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
           distribution: 'temurin'
+          java-version: 17
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build plugins
+      - name: Build Plugins
         run: |
-          ./gradlew make
+          cd $GITHUB_WORKSPACE/src
+          chmod +x gradlew
+          ./gradlew make makePluginsJson
+          cp **/build/*.cs3 $GITHUB_WORKSPACE/builds || true
+          cp build/plugins.json $GITHUB_WORKSPACE/builds || true
 
-      - name: Generate repo.json
+      - name: Push builds
         run: |
-          # Create a repo.json manifest that Cloudstream uses to discover plugins
-          REPO_URL="${{ github.server_url }}/${{ github.repository }}"
-          cat > builds/repo.json << EOF
-          {
-            "name": "FMHY Provider Repository",
-            "description": "Cloudstream extensions for browsing FMHY video directory",
-            "manifestVersion": 1,
-            "pluginLists": [
-              "${REPO_URL}/releases/download/builds/plugins.json"
-            ]
-          }
-          EOF
-
-      - name: Push builds to GitHub Pages / Release
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Build: Auto-compile plugin artifacts"
-          file_pattern: "builds/*"
-          skip_dirty_check: false
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: builds
-          name: "Plugin Builds"
-          files: |
-            builds/*.cs3
-            builds/plugins.json
-            builds/repo.json
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          cd $GITHUB_WORKSPACE/builds
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add .
+          git commit --amend -m "Build $GITHUB_SHA" || exit 0
+          git push --force || git push --force --set-upstream origin builds
