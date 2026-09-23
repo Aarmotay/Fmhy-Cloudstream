@@ -29,6 +29,11 @@ kotlin {
 }
 
 cloudstream {
+    setRepo(
+        System.getenv("GITHUB_REPOSITORY")
+            ?: "Aarmotay/Fmhy-Cloudstream"
+    )
+
     description = "FMHY Video Directory - Browse curated free streaming sites from freemediaheckyeah"
     authors = listOf("Ajay902188")
     status = 1
