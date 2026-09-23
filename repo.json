@@ -1,0 +1,8 @@
+{
+  "name": "Ajay902188 Extensions",
+  "description": "CloudStream extensions repository",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/Ajay902188/ext/builds/plugins.json"
+  ]
+}

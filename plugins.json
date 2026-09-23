@@ -1,0 +1,23 @@
+[
+    {
+        "iconUrl": "https://fmhy.pages.dev/logo.png",
+        "fileHash": "sha256-9c1758f5fc8cc92fccc38669cf0eeddae1958b443100fbb883113a979bf2a492",
+        "apiVersion": 1,
+        "fileSize": 25113,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "Ajay902188"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Anime"
+        ],
+        "version": -1,
+        "internalName": "FMHYProvider",
+        "description": "FMHY Video Directory - Browse curated free streaming sites from freemediaheckyeah",
+        "url": "",
+        "name": "FMHYProvider"
+    }
+]
